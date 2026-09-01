@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOW — 给摄影师的 macOS 选片工具</title>
+<meta name="description" content="FLOW 是一款 macOS 照片选片工具：本地处理、原生支持 RAW（CR3/RAF）、全屏「去/留」一键筛选、目标数量提醒、断点续选。">
+<style>
+  :root {
+    --bg: #111111;
+    --bg-2: #0C0C0C;
+    --surface: #1A1A1A;
+    --surface-2: #1E1E1E;
+    --accent: #B2FA4A;
+    --accent-strong: #C4FF74;
+    --accent-dim: rgba(178, 250, 74, 0.12);
+    --text: #FFFFFF;
+    --text-2: rgba(255, 255, 255, 0.64);
+    --text-3: rgba(255, 255, 255, 0.42);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --radius: 18px;
+    --maxw: 1120px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- 顶部导航 ---------- */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(17, 17, 17, 0.6);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav { display: flex; align-items: center; height: 60px; gap: 32px; }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+  .logo .dot { width: 20px; height: 20px; border-radius: 6px; background: var(--accent); display: grid; place-items: center; }
+  .logo .dot svg { width: 12px; height: 12px; }
+  .nav-links { display: flex; gap: 26px; margin-left: auto; }
+  .nav-links a { font-size: 14px; color: var(--text-2); transition: color .18s; }
+  .nav-links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: transform .15s, background .15s, opacity .15s;
+  }
+  .btn-accent { background: var(--accent); color: #141414; }
+  .btn-accent:hover { background: var(--accent-strong); transform: translateY(-1px); }
+  .btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+  .btn svg { width: 15px; height: 15px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 168px 0 96px; position: relative; text-align: center; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(700px 360px at 50% -10%, rgba(178,250,74,0.10), transparent 70%),
+      radial-gradient(500px 300px at 80% 20%, rgba(178,250,74,0.05), transparent 70%);
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--accent); font-weight: 600;
+    padding: 6px 14px; border-radius: 999px; border: 1px solid var(--accent-dim);
+    background: var(--accent-dim); margin-bottom: 26px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 6.5vw, 72px); line-height: 1.06; font-weight: 800; letter-spacing: -0.02em;
+  }
+  .hero h1 .hl { color: var(--accent); }
+  .hero .sub { margin: 22px auto 0; max-width: 560px; color: var(--text-2); font-size: 17px; }
+  .hero .cta-row { margin-top: 36px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .hero .note { margin-top: 16px; font-size: 13px; color: var(--text-3); }
+
+  /* ---------- 界面 Mock ---------- */
+  .mock-stage { margin: 72px auto 0; max-width: 920px; }
+  .mock-window {
+    background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 14px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    overflow: hidden; text-align: left;
+  }
+  .mock-titlebar {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-titlebar .tl { width: 11px; height: 11px; border-radius: 50%; }
+  .tl.r { background: #FF5F57; } .tl.y { background: #FEBC2E; } .tl.g { background: #28C840; }
+  .mock-titlebar .tname { margin-left: 8px; font-size: 12px; color: var(--text-3); }
+  .mock-body { display: flex; flex-direction: column; gap: 18px; padding: 22px; }
+
+  .mock-topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    height: 44px; padding: 0 14px; border-radius: 999px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .mock-topbar .brand { font-weight: 700; font-size: 14px; }
+  .mock-tabs { display: flex; gap: 4px; }
+  .mock-tabs span { font-size: 12px; padding: 5px 12px; border-radius: 999px; color: var(--text-2); }
+  .mock-tabs span.on { background: var(--accent); color: #141414; font-weight: 600; }
+  .mock-target { font-size: 12px; color: var(--text-2); }
+
+  .mock-photo {
+    position: relative; height: 300px; border-radius: 14px; overflow: hidden;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(120% 120% at 50% 30%, #3a4430 0%, #1c211a 45%, #0e100d 100%);
+    border: 1px solid var(--border);
+  }
+  .mock-photo .grain { position: absolute; inset: 0; opacity: 0.5; mix-blend-mode: overlay;
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 3px 3px; }
+  .mock-photo .pic-label { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
+  .mock-decide { display: flex; gap: 12px; justify-content: center; }
+  .mock-decide .d { padding: 11px 30px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+  .mock-decide .discard { background: rgba(255,255,255,0.07); color: var(--text); border: 1px solid var(--border-strong); }
+  .mock-decide .keep { background: var(--accent); color: #141414; }
+  .mock-bottombar {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    height: 46px; padding: 0 16px; border-radius: 999px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  }
+  .mock-bottombar .count { font-size: 12px; color: var(--text-2); }
+  .mock-bottombar .thumbs { display: flex; gap: 6px; }
+  .mock-bottombar .thumbs i { width: 40px; height: 26px; border-radius: 4px; border: 1px solid var(--border); }
+  .mock-bottombar .thumbs i:nth-child(1) { background: #4a5b3a; }
+  .mock-bottombar .thumbs i:nth-child(2) { background: #5b4a3a; }
+  .mock-bottombar .thumbs i:nth-child(3) { background: #3a4a5b; }
+  .mock-bottombar .save { font-size: 12px; color: var(--accent); }
+
+  /* ---------- 段落通用 ---------- */
+  section { padding: 90px 0; }
+  .sec-head { text-align: center; max-width: 640px; margin: 0 auto 56px; }
+  .sec-head .tag { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+  .sec-head h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 750; margin-top: 12px; letter-spacing: -0.01em; }
+  .sec-head p { margin-top: 14px; color: var(--text-2); font-size: 16px; }
+
+  /* ---------- 痛点 ---------- */
+  .pain { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .pain-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 28px;
+  }
+  .pain-card .ico { font-size: 22px; margin-bottom: 14px; }
+  .pain-card h3 { font-size: 17px; margin-bottom: 8px; }
+  .pain-card p { color: var(--text-2); font-size: 14px; }
+
+  /* ---------- 功能 ---------- */
+  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 30px 28px; transition: border-color .2s, transform .2s;
+  }
+  .feat:hover { border-color: var(--accent-dim); transform: translateY(-2px); }
+  .feat .mark { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-dim); display: grid; place-items: center; margin-bottom: 18px; }
+  .feat .mark svg { width: 18px; height: 18px; stroke: var(--accent); }
+  .feat h3 { font-size: 16px; margin-bottom: 8px; }
+  .feat p { color: var(--text-2); font-size: 14px; }
+
+  /* ---------- 流程 ---------- */
+  .flow { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .step { text-align: left; padding: 26px 28px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  .step .n { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .step h3 { font-size: 17px; margin: 10px 0 8px; }
+  .step p { color: var(--text-2); font-size: 14px; }
+
+  /* ---------- CTA ---------- */
+  .cta { text-align: center; }
+  .cta-card {
+    max-width: 720px; margin: 0 auto; padding: 64px 40px; border-radius: 24px;
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(178,250,74,0.10), transparent 70%),
+      var(--surface);
+    border: 1px solid var(--border-strong);
+  }
+  .cta-card h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 750; }
+  .cta-card p { color: var(--text-2); margin: 14px auto 30px; max-width: 460px; }
+  .cta-card .btn-accent { font-size: 15px; padding: 13px 26px; }
+
+  /* ---------- 安装说明 ---------- */
+  .install-box {
+    max-width: 720px; margin: 0 auto; padding: 36px 40px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .install-list { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 20px; }
+  .install-list li { counter-increment: step; display: flex; gap: 14px; font-size: 15px; color: var(--text); }
+  .install-list li::before {
+    content: counter(step); flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #141414; font-weight: 700; font-size: 13px;
+    display: grid; place-items: center; margin-top: 1px;
+  }
+  .install-list li strong { font-weight: 650; }
+  .install-list .sub { color: var(--text-2); margin-top: 2px; }
+  .install-note { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 13px; }
+
+  /* ---------- Footer ---------- */
+  footer { border-top: 1px solid var(--border); padding: 40px 0; color: var(--text-3); font-size: 13px; }
+  .foot { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
+
+  @media (max-width: 860px) {
+    .pain-grid, .feat-grid, .steps { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .hero { padding-top: 130px; }
+    .mock-photo { height: 210px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo">
+      <span class="dot"><svg viewBox="0 0 12 12" fill="#141414"><path d="M6 0 L12 6 L6 12 L0 6 Z"/></svg></span>
+      FLOW
+    </div>
+    <nav class="nav-links">
+      <a href="#pain">为什么</a>
+      <a href="#features">功能</a>
+      <a href="#workflow">怎么用</a>
+      <a href="#download">下载</a>
+    </nav>
+    <a href="FLOW.dmg" class="btn btn-accent" style="margin-left:auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
+      免费下载
+    </a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">macOS · 本地运行 · 支持 RAW</span>
+    <h1>选片，不该熬夜。<br>拍得多，<span class="hl">选得快。</span></h1>
+    <p class="sub">FLOW 是给摄影师做的选片工具。几百张 RAW 导入本地，全屏「去 / 留」一键筛选，达标即导出——把熬夜还给你自己。</p>
+    <div class="cta-row">
+      <a href="FLOW.dmg" class="btn btn-accent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
+        下载 FLOW
+      </a>
+      <a href="#features" class="btn btn-ghost">看看它怎么工作</a>
+    </div>
+    <p class="note">macOS 13+ · 免费试用 · 照片不出你的电脑</p>
+
+    <div class="mock-stage">
+      <div class="mock-window">
+        <div class="mock-titlebar">
+          <span class="tl r"></span><span class="tl y"></span><span class="tl g"></span>
+          <span class="tname">FLOW — 快速筛选照片</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-topbar">
+            <span class="brand">FLOW</span>
+            <div class="mock-tabs"><span class="on">选片</span><span>已选</span><span>分组</span></div>
+            <span class="mock-target">目标 5</span>
+          </div>
+          <div class="mock-photo">
+            <div class="grain"></div>
+            <span class="pic-label">3H6A2767.CR3</span>
+          </div>
+          <div class="mock-decide">
+            <span class="d discard">✕ 去</span>
+            <span class="d keep">✓ 留</span>
+          </div>
+          <div class="mock-bottombar">
+            <span class="count">已选 3 / 5</span>
+            <div class="thumbs"><i></i><i></i><i></i></div>
+            <span class="save">另存 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 痛点 -->
+<section class="pain" id="pain">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">Why</span>
+      <h2>选片，是摄影师最累的那一步</h2>
+      <p>拍很快，选很慢。FLOW 只解决这一件事。</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="ico">🐢</div>
+        <h3>导入慢、翻得慢</h3>
+        <p>重型软件开一次就半天，RAW 逐张加载卡得心累。FLOW 秒开文件夹，单张全屏秒切。</p>
+      </div>
+      <div class="pain-card">
+        <div class="ico">🔁</div>
+        <h3>标记乱、容易漏</h3>
+        <p>评分、旗标、色标来回切，选到后面忘了前面。FLOW 只给「去 / 留」，配合目标数量提醒，不手滑。</p>
+      </div>
+      <div class="pain-card">
+        <div class="ico">☁️</div>
+        <h3>上传云端，心里没底</h3>
+        <p>照片是你的素材，也是客户的隐私。FLOW 全程本地处理，不上传、不中转。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 功能 -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">Features</span>
+      <h2>只做「去 / 留」，但把它做扎实</h2>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3l8 5v8l-8 5-8-5V8z"/><path d="M12 8v8M9 11h6"/></svg></div>
+        <h3>全程本地</h3>
+        <p>照片文件不离开你的 Mac，隐私与速度兼得。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div>
+        <h3>原生 RAW 支持</h3>
+        <p>CR3 / RAF / NEF / ARW / DNG 直接看，不用先转格式。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 5h14v14H5z"/><path d="M5 9l4 4 3-3 4 4"/></svg></div>
+        <h3>单张全屏浏览</h3>
+        <p>一次只看一张，去 / 留一键，快捷键顺手。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg></div>
+        <h3>目标数量提醒</h3>
+        <p>设好交付张数，选够即停，避免多选返工。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v6"/><path d="M12 15v6"/><path d="M3 12h6"/><path d="M15 12h6"/></svg></div>
+        <h3>断点续选</h3>
+        <p>随时关掉，下次打开接着上次的位置继续。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 5v14M16 5v14"/><path d="M4 12h16"/></svg></div>
+        <h3>封面流复查 + 导出</h3>
+        <p>已选照片封面流快速复查，一键另存到目标文件夹。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 流程 -->
+<section class="flow" id="workflow">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">How</span>
+      <h2>三步，从导入到导出</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="n">01</div>
+        <h3>导入照片文件夹</h3>
+        <p>选一个文件夹，FLOW 秒级列出全部照片，RAW 也能看。</p>
+      </div>
+      <div class="step">
+        <div class="n">02</div>
+        <h3>逐张「去 / 留」</h3>
+        <p>全屏看、一键决定，到目标数量自动提醒。</p>
+      </div>
+      <div class="step">
+        <div class="n">03</div>
+        <h3>导出已选</h3>
+        <p>封面流复查一遍，一键另存到交付文件夹。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="download">
+  <div class="wrap">
+    <div class="cta-card">
+      <h2>把选片的夜晚，换回来。</h2>
+      <p>下载 FLOW，试试「去 / 留」到底能有多快。你的照片，永远留在你自己的电脑里。</p>
+      <a href="FLOW.dmg" class="btn btn-accent" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
+        下载 FLOW（macOS）
+      </a>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-3)">FLOW.dmg · 约 0.8 MB · macOS 13+</p>
+    </div>
+  </div>
+</section>
+
+<!-- 安装说明 -->
+<section class="install" id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">Install</span>
+      <h2>安装说明</h2>
+    </div>
+    <div class="install-box">
+      <ol class="install-list">
+        <li>
+          <div><strong>打开 DMG</strong><div class="sub">双击下载好的 FLOW.dmg。</div></div>
+        </li>
+        <li>
+          <div><strong>拖入「应用程序」</strong><div class="sub">把 FLOW 图标拖到 Applications 文件夹。</div></div>
+        </li>
+        <li>
+          <div><strong>首次打开</strong>
+            <div class="sub">macOS 会提示「无法验证开发者」——右键（或按住 Control 点击）FLOW → 选「打开」→ 弹窗里再点「打开」。或到「系统设置 → 隐私与安全性 → 仍要打开」。</div>
+          </div>
+        </li>
+      </ol>
+      <p class="install-note">之后即可正常双击启动。FLOW 是本地运行的独立构建，暂未经过 Apple 公证，所以首次打开需要手动放行一次。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span>© 2026 FLOW · 给摄影师的 macOS 选片工具</span>
+    <span>本地运行 · 支持 RAW · macOS 13+</span>
+  </div>
+</footer>
+
+<script>
+  // ===== 下载计数（可选）：GitHub Pages 是纯静态、没有后端，
+  // 用免费的 Upstash Redis（REST API）实现计数。
+  // 1) 到 upstash.com 免费建一个 Redis 数据库（REST 模式）
+  // 2) 把 REST URL 和 token 填到下面两处
+  var UPSTASH_URL = "https://REPLACE.upstash.io";
+  var UPSTASH_TOKEN = "REPLACE_WITH_TOKEN";
+
+  function trackDownload() {
+    if (UPSTASH_URL.indexOf("REPLACE") !== -1) return; // 未配置则跳过
+    try {
+      fetch(UPSTASH_URL + "/incr/downloads", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + UPSTASH_TOKEN }
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  document.querySelectorAll('a[href="FLOW.dmg"]').forEach(function (a) {
+    a.addEventListener('click', trackDownload);
+  });
+</script>
+
+</body>
+</html>
