@@ -1,39 +1,58 @@
-# FLOW
+# FLOW 官网（GitHub Pages）
 
-> 给摄影师做的 macOS 选片工具。把几百张 RAW 的「去 / 留」做到最快，选片不再熬夜。
+给摄影师的 macOS 选片工具官网。纯静态部署，下载计数用免费的 Upstash Redis 实现。
 
-**官网**：https://jonlynnn.github.io/Flow/  
-**下载**：https://jonlynnn.github.io/Flow/FLOW.dmg
+## 目录
 
-## 这是什么
+- `index.html` — 单页官网
+- `FLOW.dmg` — macOS 安装包（下载链接指向它）
+- `.nojekyll` — 关掉 GitHub Pages 的 Jekyll 处理
 
-FLOW 是一款只专注「选片」这一件事的 macOS 应用：全程本地、原生支持 RAW、单张全屏快速筛选。
+## 一、部署到 GitHub Pages
 
-## 功能
+1. 在 GitHub 新建一个仓库（例如 `flow`），**公开或私有都行**。
+2. 本地把这个目录推上去：
 
-- **全程本地** —— 照片不出你的电脑，隐私与速度兼得
-- **原生 RAW 支持** —— CR3 / RAF / NEF / ARW / DNG 直接看
-- **单张全屏浏览** —— 一次一张，「去 / 留」一键快捷键
-- **目标数量提醒** —— 选够即停，避免多选返工
-- **断点续选** —— 随时关掉，下次接着上次的位置继续
-- **封面流复查 + 导出** —— 已选照片快速复查，一键另存
+   ```bash
+   cd /Users/wanghaoyu/DS/flow-website
+   git init
+   git add .
+   git commit -m "FLOW 官网"
+   git branch -M main
+   git remote add origin https://github.com/你的用户名/flow.git
+   git push -u origin main
+   ```
 
-## 界面
+3. 仓库 → **Settings → Pages**：
+   - Source 选 **Deploy from a branch**
+   - Branch 选 **main**，目录选 **/ (root)**，保存。
+4. 等一两分钟，访问 `https://你的用户名.github.io/flow/` 即可。
 
-深色 + 液态玻璃风格，不堆按钮，把注意力留给照片本身。
+> 注：下载链接用相对路径 `FLOW.dmg`，放在根目录能直接下载，无需改动。
 
-## 安装
+## 二、下载计数（可选）
 
-1. 下载 `FLOW.dmg`（约 0.8 MB）
-2. 打开后把 FLOW 拖到「应用程序」文件夹
-3. 首次打开：macOS 提示「无法验证开发者」→ 右键（或按住 Control 点击）FLOW →「打开」→ 再点「打开」
+GitHub Pages 没有后端，所以计数用一个免费的 Redis 服务 **Upstash**：
 
-## 技术
+1. 到 [upstash.com](https://upstash.com) 注册（免费额度足够）。
+2. 创建一个 Redis 数据库，选 **REST API** 模式。
+3. 复制它给你的 **REST URL** 和 **token**，填进 `index.html` 底部脚本里：
 
-- SwiftUI（macOS 13+）
-- 本地扫描 + QuickLook 缩略图 + 会话持久化（断点续选）
-- 构建：`swiftc -O` 直接编译，无需 Xcode 工程
+   ```js
+   var UPSTASH_URL = "https://xxxx.upstash.io";
+   var UPSTASH_TOKEN = "xxxx";
+   ```
 
-## 仓库说明
+4. 提交推送即可。之后每次点「下载」，`downloads` 这个 key 会 +1。
 
-本仓库用于存放**官网落地页**与**安装包（DMG）**。应用源码暂未公开，如需授权或合作请联系。
+### 后门查询下载量
+
+浏览器或命令行访问（带上你自己的 token）：
+
+```bash
+curl -H "Authorization: Bearer 你的token" https://xxxx.upstash.io/get/downloads
+```
+
+返回类似 `{"result": 37}`，`37` 就是下载次数。
+
+> ⚠️ 说明：因为是纯静态，token 会出现在前端 JS 里（查看源码能看到）。对下载计数这种低敏感数据通常可接受；如果你想要「真正保密的查询」，需要再加一个极小的 serverless 后端（Cloudflare Worker / Vercel / Netlify），我可以再帮你改。

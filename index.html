@@ -211,12 +211,31 @@
   .install-list .sub { color: var(--text-2); margin-top: 2px; }
   .install-note { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 13px; }
 
+  /* ---------- 隐私声明 ---------- */
+  .privacy { padding: 24px 0 90px; }
+  .privacy-box {
+    max-width: 720px; margin: 0 auto; padding: 34px 40px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .privacy-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+  .privacy-list li { font-size: 15px; color: var(--text-2); line-height: 1.7; }
+  .privacy-list li strong { color: var(--text); font-weight: 650; }
+
+  /* ---------- 2.0 新特性 ---------- */
+  .whatsnew { padding: 24px 0 90px; }
+  .wn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .wn-card { padding: 26px 22px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
+  .wn-ico { font-size: 28px; margin-bottom: 14px; }
+  .wn-card h3 { font-size: 16px; margin-bottom: 8px; }
+  .wn-card p { color: var(--text-2); font-size: 13px; line-height: 1.6; }
+
   /* ---------- Footer ---------- */
   footer { border-top: 1px solid var(--border); padding: 40px 0; color: var(--text-3); font-size: 13px; }
   .foot { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
 
   @media (max-width: 860px) {
     .pain-grid, .feat-grid, .steps { grid-template-columns: 1fr; }
+    .wn-grid { grid-template-columns: 1fr 1fr; }
     .nav-links { display: none; }
     .hero { padding-top: 130px; }
     .mock-photo { height: 210px; }
@@ -234,6 +253,7 @@
       FLOW
     </div>
     <nav class="nav-links">
+      <a href="#whatsnew">新特性</a>
       <a href="#pain">为什么</a>
       <a href="#features">功能</a>
       <a href="#workflow">怎么用</a>
@@ -249,9 +269,9 @@
 <!-- HERO -->
 <section class="hero">
   <div class="wrap">
-    <span class="eyebrow">macOS · 本地运行 · 支持 RAW</span>
+    <span class="eyebrow">macOS · 本地运行 · 支持 RAW · 2.0</span>
     <h1>选片，不该熬夜。<br>拍得多，<span class="hl">选得快。</span></h1>
-    <p class="sub">FLOW 是给摄影师做的选片工具。几百张 RAW 导入本地，全屏「去 / 留」一键筛选，达标即导出——把熬夜还给你自己。</p>
+    <p class="sub">FLOW 是给摄影师做的选片工具。多任务卡片、画册拼贴、液态玻璃界面，几百张 RAW 导入本地，全屏「去 / 留」一键筛选，达标即导出——把熬夜还给你自己。</p>
     <div class="cta-row">
       <a href="FLOW.dmg" class="btn btn-accent">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
@@ -270,7 +290,7 @@
         <div class="mock-body">
           <div class="mock-topbar">
             <span class="brand">FLOW</span>
-            <div class="mock-tabs"><span class="on">选片</span><span>已选</span><span>分组</span></div>
+            <div class="mock-tabs"><span class="on">选片</span><span>已选</span></div>
             <span class="mock-target">目标 5</span>
           </div>
           <div class="mock-photo">
@@ -287,6 +307,39 @@
             <span class="save">另存 →</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2.0 新特性 -->
+<section class="whatsnew" id="whatsnew">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">What's New</span>
+      <h2>2.0 新特性</h2>
+      <p>这一版，我们把「多任务」和「已选复查」彻底重做，更顺手、更好看。</p>
+    </div>
+    <div class="wn-grid">
+      <div class="wn-card">
+        <div class="wn-ico">🗂</div>
+        <h3>侧边栏快速切换</h3>
+        <p>左侧任务侧边栏，多个选片任务一键切换，进度自动保存，不用来回开文件夹。</p>
+      </div>
+      <div class="wn-card">
+        <div class="wn-ico">🌊</div>
+        <h3>选片瀑布流预览</h3>
+        <p>已选照片按横竖自动拼成瀑布流画册，滚动聚焦，点击放大居中预览。</p>
+      </div>
+      <div class="wn-card">
+        <div class="wn-ico">🪟</div>
+        <h3>液态玻璃界面</h3>
+        <p>原生 Liquid Glass 质感，顶栏底栏半透明悬浮，沉浸式过片。</p>
+      </div>
+      <div class="wn-card">
+        <div class="wn-ico">✨</div>
+        <h3>删除补位动效</h3>
+        <p>删一张，其余照片平滑补位，一镜到底，视觉更顺滑。</p>
       </div>
     </div>
   </div>
@@ -355,8 +408,18 @@
       </div>
       <div class="feat">
         <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 5v14M16 5v14"/><path d="M4 12h16"/></svg></div>
-        <h3>封面流复查 + 导出</h3>
-        <p>已选照片封面流快速复查，一键另存到目标文件夹。</p>
+        <h3>已选画册拼贴</h3>
+        <p>已选照片按横竖自动拼成画册，点击放大居中预览，一键另存导出。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 9h18M9 3v18"/></svg></div>
+        <h3>多任务卡片 + 侧边栏</h3>
+        <p>多个选片任务一目了然，侧边栏快速切换，进度随时保存。</p>
+      </div>
+      <div class="feat">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3l8 5v8l-8 5-8-5V8z"/><path d="M12 3l8 5v8l-8 5-8-5V8z" opacity=".4"/></svg></div>
+        <h3>液态玻璃界面</h3>
+        <p>原生 Liquid Glass 质感，顶栏底栏半透明悬浮，沉浸式过片。</p>
       </div>
     </div>
   </div>
@@ -399,7 +462,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg>
         下载 FLOW（macOS）
       </a>
-      <p style="margin-top:14px; font-size:12px; color:var(--text-3)">FLOW.dmg · 约 0.8 MB · macOS 13+</p>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-3)">FLOW 2.0 · FLOW.dmg 约 0.9 MB · macOS 13+ · 完全免费</p>
     </div>
   </div>
 </section>
@@ -430,10 +493,27 @@
   </div>
 </section>
 
+<!-- 隐私声明 -->
+<section class="privacy" id="privacy">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="tag">Privacy</span>
+      <h2>隐私声明</h2>
+    </div>
+    <div class="privacy-box">
+      <ul class="privacy-list">
+        <li><strong>照片只在你的 Mac 上处理</strong>——FLOW 全程本地读取，绝不上传、不中转、不删除原图。</li>
+        <li><strong>无任何网络请求</strong>——没有账号系统、没有云同步、没有广告追踪。</li>
+        <li><strong>选片进度与设置仅保存在本机</strong>——你可以随时删除，不影响任何云端数据。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="wrap foot">
     <span>© 2026 FLOW · 给摄影师的 macOS 选片工具</span>
-    <span>本地运行 · 支持 RAW · macOS 13+</span>
+    <span>本地运行 · 支持 RAW · macOS 13+ · <a href="#privacy" style="color:var(--text-2)">隐私声明</a></span>
   </div>
 </footer>
 
